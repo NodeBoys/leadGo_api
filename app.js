@@ -18,16 +18,15 @@ server.listen(app.get('port'), function() {
 
 io.on('connection', function(socket) {
 
-    var token = 'myRoom';
-    console.log('token', token);
-    socket.join(token);
-
     socket.on('location', function(data) {
 
+        
         console.log(data);
 
-        io.to(token).emit('res', {
-            data: 'get your room : ' + token
+        socket.join(data.room);
+
+        io.to(data.room).emit('res', {
+            data: 'get your room : ' + data.room
         });
     });
 });
