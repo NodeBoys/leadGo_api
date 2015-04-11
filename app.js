@@ -18,16 +18,16 @@ server.listen(app.get('port'), function() {
 
 io.on('connection', function(socket) {
 
-    // socket.emit('res', {
-    //     hello: 'world'
-    // });
+    var token = socket.id;
+    console.log('token', token);
+    socket.join(token);
 
     socket.on('location', function(data) {
 
         console.log(data);
 
-        socket.emit('res', {
-            data: 'come on baby'
+        io.to(token).emit('res', {
+            data: 'get your room' + token
         });
     });
 });
