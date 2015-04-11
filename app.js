@@ -27,7 +27,7 @@ io.on('connection', function(socket) {
         console.log(data);
 
         io.to(token).emit('res', {
-            data: 'get your room' + token
+            data: 'get your room : ' + token
         });
     });
 });
