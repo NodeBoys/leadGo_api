@@ -26,7 +26,8 @@ io.on('connection', function(socket) {
         socket.join(data.room);
 
         io.to(data.room).emit('res', {
-            data: 'get your room : ' + data.room
+            data: 'get your data : ' + data.data,
+            room: 'get your data : ' + data.room
         });
     });
 });
