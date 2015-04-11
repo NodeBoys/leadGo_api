@@ -18,7 +18,7 @@ server.listen(app.get('port'), function() {
 
 io.on('connection', function(socket) {
 
-    var token = socket.id;
+    var token = 'myRoom';
     console.log('token', token);
     socket.join(token);
 
