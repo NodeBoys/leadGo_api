@@ -3,7 +3,9 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var multer  = require('multer');
 var mongojs = require('mongojs');
-var Promise = require("bluebird");
+var Promise = require('bluebird');
+var _ = require('lodash');
+var debug = require('debug')('leadGo');
 
 var app = express();
 var server = http.Server(app);
@@ -25,9 +27,23 @@ app.get('/teams', function (req, res){
     /*
      * 去資料庫把所有的 teams 抓出來
      */
-    console.log(req.query);
 
-    res.send('get teams');
+    // TODO: 之後要用 Promise 改寫
+    teams.find({}, function (err, teams){
+        
+        debug('error = %j', err);
+        debug('teams = %j', teams);
+
+        if(err){
+            return res.json({
+                error: err
+            });
+        }
+
+        return res.json({
+            data: teams
+        });
+    });
 });
 
 app.post('/teams', function (req, res){
@@ -35,35 +51,42 @@ app.post('/teams', function (req, res){
     /*
      * 將 team 的資料存入資料庫
      */
-    // teams.insert(req.body, function (err, team){
-    //     console.log(team);
-    // });
 
-    Promise.resolve(
-        teams.insert(req.body)
-    )
-    .then(function (err, team){
-        console.log(2);
-        console.log(team);
-        res.json({
+    // TODO: 之後要用 Promise 改寫
+    if(!req.body.name){
+        return res.json({
+            error: new Error('需要 team name') + ''
+        })
+    }
+
+    if(!req.body.leader){
+        return res.json({
+            error: new Error('需要 leader socket token') + ''
+        })
+    }
+
+    var options = _.pick(req.body, 'name', 'leader');
+    options.members = [];
+    options.createdAt = Date.now();
+    options.updatedAt = Date.now();
+
+    debug('options is = %j', options);
+
+    teams.insert(options, function (err, team){
+        
+        debug('error = %j', err);
+        debug('create new team = %j', team);
+
+        if(err){
+            return res.json({
+                error: err
+            });
+        }
+
+        return res.json({
             data: team
         });
-    })
-    .error(function (err){
-        console.log(3);
-        res.json({
-            error: err
-        });
-    })
-    .catch(function (e){
-        console.log(4);
-        res.json({
-            error: e
-        });
     });
-    // console.log(req.body);
-
-    // res.send('create teams');
 });
 
 app.post('/teams/join', function (req, res){
@@ -71,9 +94,33 @@ app.post('/teams/join', function (req, res){
     /*
      * 某個 socket id 加入 team
      */
-    console.log(req.body);
 
-    res.send('join teams');
+    if(!req.body.name){
+        return res.json({
+            error: new Error('需要 team name') + ''
+        })
+    }
+
+    if(!req.body.member){
+        return res.json({
+            error: new Error('需要 member socket token') + ''
+        })
+    }
+
+    teams.findAndModify({
+        query: { name: req.body.name },
+        update: { $push: { members: req.body.member } }
+    }, function(err, doc, lastErrorObject) {
+        if(err){
+            return res.json({
+                error: err + ''
+            });
+        }
+
+        return res.json({
+            data: doc
+        });
+    });
 });
 
 app.post('/teams/leave/:teamId', function (req, res){
