@@ -81,8 +81,8 @@ app.post('/teams/join', function (req, res){
     var name = req.body.name,
         teamId = req.body.socketId;
 
-    if(!name) res.send({status:403, message:'沒名字加入蝦小隊伍'});
-    if(!teamId) res.send({status:403, message:'沒隊伍ID加入蝦小隊伍'});
+    if(!name) return res.send({status:403, message:'沒名字加入蝦小隊伍'});
+    if(!teamId) return res.send({status:403, message:'沒隊伍ID加入蝦小隊伍'});
 
     db.teams.update({leader:teamId}, {'$push':{members:name}}, function(err, team){
         if(err) res.send({status:500, message:'不給你加勒', errors:err});
@@ -118,15 +118,31 @@ server.listen(app.get('port'), function() {
 
 io.on('connection', function(socket) {
 
-    socket.on('location', function(data) {
+    socket.on('create', function (data){
 
-        console.log(data);
+        debug('create team data = %j', data);
 
         socket.join(data.room);
+    });
 
-        io.to(data.room).emit('res', {
-            data: 'get your data : ' + data.data,
-            room: 'get your data : ' + data.room
-        });
+    socket.on('join', function (data){
+
+        debug('join team data = %j', data);
+
+        socket.join(data.room);
+    });
+
+    socket.on('leave', function (data){
+
+        debug('leave team data = %j', data);
+
+        socket.leave(data.room);
+    });
+
+    socket.on('location', function (data) {
+
+        debug('location data = %j', data);
+
+        io.to(data.room).emit('res', data);
     });
 });
