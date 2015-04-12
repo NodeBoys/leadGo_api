@@ -3,10 +3,15 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var moment = require('moment');
 var multer  = require('multer');
+var mongojs = require('mongojs');
+var Promise = require('bluebird');
+var _ = require('lodash');
+var debug = require('debug')('leadGo');
 
 var app = express();
 var server = http.Server(app);
 var io = require('socket.io')(server);
+var db = mongojs('127.0.0.1/leadgo');
 
 var mongojs = require('mongojs'),
     db = mongojs('leadGo', ['teams', 'cars']);
@@ -20,13 +25,30 @@ app.get('/', function(req, res) {
     res.send('test');
 });
 
+var teams = db.collection('teams');
+
 app.get('/teams', function (req, res){
 
     /*
      * 去資料庫把所有的 teams 抓出來
      */
 
-    res.send(data);
+    // TODO: 之後要用 Promise 改寫
+    teams.find({}, function (err, teams){
+
+        debug('error = %j', err);
+        debug('teams = %j', teams);
+
+        if(err){
+            return res.json({
+                error: err
+            });
+        }
+
+        return res.json({
+            data: teams
+        });
+    });
 });
 
 app.post('/teams', function (req, res){
@@ -49,8 +71,6 @@ app.post('/teams', function (req, res){
             res.send({status:200, message:'房間開好了', data:team});
         }
     });
-
-
 });
 
 app.post('/teams/join', function (req, res){
